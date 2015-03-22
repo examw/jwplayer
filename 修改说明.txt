@@ -1,0 +1,146 @@
+1，解压文件test02
+2，下载安装 Flash CS6	
+	免安装精简版下载地址
+	http://d3.orsoon.com:5623/%CD%BC%CE%C4%B4%A6%C0%ED/%B6%AF%BB%AD%D6%C6%D7%F7/drg0509/Adobe%20Flash%20CS6.rar
+3，关键目录test02/src
+	src\aw.as	为移动名称效果的类文件，可修改此文件
+	src\com		播放器源码文件
+	
+4， *******************************************************
+	****修改logo
+	*******************************************************
+	
+	Logo的类文件
+	com.longtailvideo.jwplayer.view.Logo.as
+	修改构造方法
+	/** Constructor **/
+		public function Logo(player:IPlayer) {
+			super();
+			//直接返回终止添加LOGO 
+            //return;	//若不需要添加logo可以直接返回
+			defaults['file'] = "http://demo.examw.com/images/logoo.png";	//logo的文件位置
+			defaults['link'] = "http://www.examw.com/";	//点击logo的连接地址
+			animations = new Animations(this);
+			_player = player;
+			player.addEventListener(PlayerStateEvent.JWPLAYER_PLAYER_STATE, stateHandler);
+			setupDefaults();
+			setupMouseEvents();
+			//loadFile();	//不用他的方法
+			//加载logo文件
+			loader = new Loader();
+			loader.contentLoaderInfo.addEventListener(Event.COMPLETE, loaderHandler);
+			loader.contentLoaderInfo.addEventListener(IOErrorEvent.IO_ERROR, errorHandler);
+			loader.load(new URLRequest(getConfigParam('file')));
+		}
+	*******************************************************
+	*****修改video未找到的提示
+	*******************************************************
+	
+	HTTPMediaProvider.as;RTMPMediaProvider.as;VideoMediaProvider.as;YouTubeMediaProvider.as;
+	包 com.longtailvideo.jwplayer.media
+	搜索not found
+	如修改HTTPMediaProvide.as
+		/** Receive NetStream status updates. **/
+		protected function statusHandler(evt:NetStatusEvent):void {
+			switch (evt.info.code) {
+				case "NetStream.Play.Stop":
+					if(state != PlayerState.BUFFERING && !getConfigProperty('dvr')) {
+						complete();
+					}
+					break;
+				case "NetStream.Play.StreamNotFound":
+					stop();
+					//error('Video not found: ' + item.file);
+					error('Video not found: Sorry !');
+					break;
+				case 'NetStream.Buffer.Full':
+					if (!_bufferFull) {
+						_bufferFull = true;
+						sendMediaEvent(MediaEvent.JWPLAYER_MEDIA_BUFFER_FULL);
+					}
+					break;
+			}
+			// sendMediaEvent(MediaEvent.JWPLAYER_MEDIA_META, {metadata: {status: evt.info.code}});
+		}
+	*******************************************************
+	****修改右键菜单
+	*******************************************************
+	
+	RightclickMenu类文件
+	com.longtailvideo.jwplayer.view.RightclickMenu.as
+	修改关于
+		protected function setAboutText():void {
+			//修改版权描述
+			//about = new ContextMenuItem('xx教育网');
+			about = new ContextMenuItem('Player for EXAMW ' + _player.version + '...');
+		}
+
+		/** jump to the about page. **/
+		protected function aboutHandler(evt:ContextMenuEvent):void {
+			//修改版权链接
+			navigateToURL(new URLRequest('http://www.examw.com'), '_blank');
+			//navigateToURL(new URLRequest('http://item.taobao.com/item.htm?id=8123943203'), '_blank');
+		}
+	*******************************************************
+	****修改版本号
+	*******************************************************
+	PlayerVersion类文件
+	com.longtailvideo.jwplayer.player.PlayerVersion.as
+	public class PlayerVersion {
+		protected static var _version:String = '5.9.2156';	//改成想要的版本号
+		
+		public static function get version():String {
+			return _version;
+		}
+		
+		public static var id:String = "";
+	}
+
+	*******************************************************
+	****修改 固定播放网址前缀
+	*******************************************************
+	PlayListItem.as
+	com.longtailvideo.jwplayer.model.PlayListItem.as 
+	/** File setter.  Note, if levels are defined, this will be ignored. **/		
+	public function set file(f:String):void {
+		_file = f;		
+		//_file = "http://vod.dalischool.com:8080/"+ f; //修改		
+	}
+
+	*******************************************************
+	****修改 固定播放网址前缀
+	*******************************************************
+	 aw.as
+	 1, 增加一个获取用户名的线程属性 
+		private var getUserNameTimer:Timer = new Timer(1000);
+	 2, function aw()增加代码
+	 	//通过JS获取用户名
+		//this.getUserName();
+		this.getUserNameTimer.addEventListener(TimerEvent.TIMER, getUserName);
+		this.getUserNameTimer.start();
+	 3, 修改getName方法	如果页面js没有这个userName方法 会报异常,不启动播放器
+	 private function getUserName(e:TimerEvent):void
+		{
+			if (ExternalInterface.available)
+			{
+				var __userName:String = ExternalInterface.call("userName").toString();
+				ApexTrace.trace("\---通过JS获取的当前用户名为:" + __userName);
+				if (__userName == null || __userName == "undefined") {
+					ApexTrace.trace("\---当前用户名称格式有误");
+				}else {
+					//更新正确用户名
+					this._userNameText.text = __userName;
+				}
+			}
+			else
+			{
+				ApexTrace.trace("\---请部署到服务器环境下测试");
+			}
+		}
+	*
+	********************************************************
+	
+5，打开Flash cs6
+	文件/打开	选择src/awDIY.fla
+	文件/发布	即可编译成swf在src目录下
+
